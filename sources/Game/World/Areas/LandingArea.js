@@ -28,11 +28,11 @@ export class LandingArea extends Area
     {
         const references = this.references.items.get('letters')
 
-        // Compute center of original BRUNO SIMON letter group for new text placement
+        // Compute center of original landing letter group for new text placement
         const positions = []
         for(const reference of references)
         {
-            // Hide the "BRUNO SIMON" letters — this is Dhia's portfolio
+            // Hide the original landing letters; this is Dhia's portfolio
             reference.visible = false
             positions.push(reference.position.clone())
 
@@ -70,6 +70,9 @@ export class LandingArea extends Area
             const letterDepth = 0.5
             const spacing = 0.6
 
+            // Pulsing color uniform (WebGPU/TSL compatible)
+            const glowIntensity = uniform(0.6)
+
             // Build each word as a mesh and measure widths
             const meshes = []
             let totalWidth = 0
@@ -96,16 +99,19 @@ export class LandingArea extends Area
 
             for(const { geometry, width } of meshes)
             {
-                const material = new THREE.MeshStandardMaterial({
-                    color: new THREE.Color(0x4488ff),
-                    emissive: new THREE.Color(0x1133cc),
-                    emissiveIntensity: 0.6,
-                    roughness: 0.4,
-                    metalness: 0.1
+                // Use MeshDefaultMaterial (MeshLambertNodeMaterial) — WebGPU/TSL compatible
+                const baseColor = color(0x4488ff)
+                const glowColor = color(0x88bbff)
+                const material = new MeshDefaultMaterial({
+                    colorNode: mix(baseColor, glowColor, glowIntensity),
+                    hasWater: false,
+                    hasReveal: false,
                 })
 
                 const mesh = new THREE.Mesh(geometry, material)
                 mesh.position.set(offsetX, this.letterCenter.y, this.letterCenter.z)
+                mesh.castShadow = false
+                mesh.receiveShadow = false
                 group.add(mesh)
 
                 offsetX += width + spacing
@@ -114,23 +120,17 @@ export class LandingArea extends Area
             group.position.set(this.letterCenter.x, 0, 0)
             this.game.scene.add(group)
 
-            // Pulsing glow animation
-            const allMaterials = []
-            group.traverse(child =>
-            {
-                if(child.isMesh && child.material) allMaterials.push(child.material)
-            })
-
+            // Pulsing glow animation via uniform (WebGPU safe)
             const pulse = () =>
             {
-                gsap.to(allMaterials, {
-                    emissiveIntensity: 1.2,
+                gsap.to(glowIntensity, {
+                    value: 1.0,
                     duration: 1.2,
                     ease: 'power1.inOut',
                     onComplete: () =>
                     {
-                        gsap.to(allMaterials, {
-                            emissiveIntensity: 0.2,
+                        gsap.to(glowIntensity, {
+                            value: 0.2,
                             duration: 1.2,
                             ease: 'power1.inOut',
                             onComplete: pulse
@@ -139,6 +139,11 @@ export class LandingArea extends Area
                 })
             }
             pulse()
+        },
+        undefined,
+        (error) =>
+        {
+            console.warn('Font failed to load, skipping name text:', error)
         })
     }
 

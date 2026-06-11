@@ -356,10 +356,14 @@ export class LabArea extends Area
             this.images.mesh.visible = true
             const resource = this.images.resources.get(key)
 
-            // VideoTexture can't be cloned — use a placeholder for the old slot
+            // VideoTexture cannot be cloned, so use a placeholder for the old slot
             const placeholder = this.images.createPlaceholderTexture()
             this.images.textureOld = resource.isVideo ? placeholder : resource.texture.clone()
             this.images.textureNew = resource.isVideo ? resource.texture : resource.texture.clone()
+
+            // Texture uniform nodes can swap .value without shader recompile
+            this.images.textureOldNode = texture(this.images.textureOld)
+            this.images.textureNewNode = texture(this.images.textureNew)
 
             // Color node
             const colorNode = Fn(() =>
@@ -371,9 +375,9 @@ export class LabArea extends Area
                 uvNew.x.addAssign(this.images.animationProgress.oneMinus().mul(-0.25).mul(this.images.animationDirection))
                 uvOld.x.addAssign(this.images.animationProgress.mul(0.25).mul(this.images.animationDirection))
 
-                // Textures
-                const textureOldColor = texture(this.images.textureOld, uvOld).rgb
-                const textureNewColor = texture(this.images.textureNew, uvNew).rgb
+                // Sample via node references so we can swap .value later
+                const textureOldColor = this.images.textureOldNode.sample(uvOld).rgb.toVar()
+                const textureNewColor = this.images.textureNewNode.sample(uvNew).rgb.toVar()
 
                 // Load mix
                 textureNewColor.assign(mix(color('#333333'), textureNewColor, this.images.loadProgress))
@@ -428,14 +432,31 @@ export class LabArea extends Area
 
                 if(resource.isVideo)
                 {
-                    // VideoTexture: point textureNew source directly at the video
+                    // Swap the node value to the live VideoTexture
                     this.images.textureNew = resource.texture
+                    this.images.textureNewNode.value = resource.texture
                     this.images.material.needsUpdate = true
+                    if(this.state === LabArea.STATE_OPEN || this.state === LabArea.STATE_OPENING)
+                    {
+                        resource.video.currentTime = 0
+                        resource.video.play().catch(() => {})
+                    }
                 }
                 else
                 {
-                    this.images.textureNew.copy(resource.texture)
-                    this.images.textureNew.needsUpdate = true
+                    // For plain textures copy into a reusable Texture object
+                    if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
+                    {
+                        this.images.textureNew.copy(resource.texture)
+                        this.images.textureNew.needsUpdate = true
+                        this.images.textureNewNode.value = this.images.textureNew
+                    }
+                    else
+                    {
+                        this.images.textureNew = resource.texture.clone()
+                        this.images.textureNew.needsUpdate = true
+                        this.images.textureNewNode.value = this.images.textureNew
+                    }
                 }
 
                 gsap.to(this.images.loadProgress, { value: 1, duration: 1, overwrite: true })
@@ -502,6 +523,7 @@ export class LabArea extends Area
                     video.loop = true
                     video.muted = true
                     video.playsInline = true
+                    video.preload = 'auto'
                     video.crossOrigin = 'anonymous'
                     resource.video = video
 
@@ -531,17 +553,19 @@ export class LabArea extends Area
                 else
                 {
                     // KTX texture fallback
-                    const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                    const isPng = key.endsWith('.png')
+                    const loader = this.game.resourcesLoader.getLoader(isPng ? 'texture' : 'textureKtx')
                     loader.load(
                         `lab/images/${key}`,
                         (loadedTexture) =>
                         {
+                            loadedTexture.colorSpace = THREE.SRGBColorSpace
+                            loadedTexture.flipY = false
+                            loadedTexture.magFilter = THREE.LinearFilter
+                            loadedTexture.minFilter = THREE.LinearFilter
+                            loadedTexture.generateMipmaps = false
+
                             resource.texture = loadedTexture
-                            resource.colorSpace = THREE.SRGBColorSpace
-                            resource.flipY = false
-                            resource.magFilter = THREE.LinearFilter
-                            resource.minFilter = THREE.LinearFilter
-                            resource.generateMipmaps = false
                             resource.loaded = true
                             this.images.loadEnded(key)
                         },
@@ -582,24 +606,44 @@ export class LabArea extends Area
             // Update textures
             if(this.images.initiated)
             {
-                if(!this.images.textureOld.isVideoTexture)
+                // Snapshot old: copy current "new" into "old" node before transition
+                if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
                 {
                     this.images.textureOld.copy(this.images.textureNew)
                     this.images.textureOld.needsUpdate = true
+                    this.images.textureOldNode.value = this.images.textureOld
+                }
+                else
+                {
+                    // Previous was a video: show placeholder as old
+                    this.images.textureOldNode.value = this.images.createPlaceholderTexture()
                 }
 
                 if(resource.loaded)
                 {
                     if(resource.isVideo)
                     {
-                        // Video: update the reference, shader will pick it up next frame
+                        // VideoTexture: swap node value so shader gets live frames
                         this.images.textureNew = resource.texture
+                        this.images.textureNewNode.value = resource.texture
                         if(this.images.material) this.images.material.needsUpdate = true
+                        // Start playback
+                        resource.video.currentTime = 0
+                        resource.video.play().catch(() => {})
                     }
                     else
                     {
-                        this.images.textureNew.copy(resource.texture)
-                        this.images.textureNew.needsUpdate = true
+                        if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
+                        {
+                            this.images.textureNew.copy(resource.texture)
+                            this.images.textureNew.needsUpdate = true
+                        }
+                        else
+                        {
+                            this.images.textureNew = resource.texture.clone()
+                            this.images.textureNew.needsUpdate = true
+                        }
+                        this.images.textureNewNode.value = this.images.textureNew
                     }
                 }
             }
@@ -935,7 +979,8 @@ export class LabArea extends Area
                             return
                         }
 
-                        const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                        const isMiniPng = project.imageMini && project.imageMini.endsWith('.png')
+                        const loader = this.game.resourcesLoader.getLoader(isMiniPng ? 'texture' : 'textureKtx')
 
                         loader.load(
                             `lab/images/${project.imageMini}`,
@@ -978,7 +1023,7 @@ export class LabArea extends Area
                             undefined,
                             () =>
                             {
-                                // KTX load error: fallback placeholder
+                                // Load error: fallback placeholder
                                 const material = new MeshDefaultMaterial({
                                     colorNode: color('#2244aa'),
                                     hasWater: false,
@@ -1437,6 +1482,13 @@ export class LabArea extends Area
 
         // Achievement
         this.game.achievements.setProgress('lab', this.navigation.current.title)
+
+        const currentResource = this.images.resources.get(this.navigation.current.image)
+        if(currentResource && currentResource.video)
+        {
+            currentResource.video.currentTime = 0
+            currentResource.video.play().catch(() => {})
+        }
     }
 
     close()
@@ -1488,6 +1540,12 @@ export class LabArea extends Area
         const sound = this.game.audio.groups.get('click')
         if(sound)
             sound.play(false)
+
+        for(const resource of this.images.resources.values())
+        {
+            if(resource.video)
+                resource.video.pause()
+        }
     }
 
     previous()
@@ -1575,6 +1633,12 @@ export class LabArea extends Area
         if(this.state !== LabArea.STATE_CLOSED)
         {
             this.scroller.animate()
+
+            // Keep VideoTexture in sync; WebGPU does not auto-update video textures
+            if(this.images && this.images.initiated && this.images.textureNew && this.images.textureNew.isVideoTexture)
+            {
+                this.images.textureNew.needsUpdate = true
+            }
         }
     }
 }

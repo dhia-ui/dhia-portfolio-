@@ -11,9 +11,12 @@ export default [
         distinctions: [],
         images:
         [
-            'security-audit-1.ktx',
-            'security-audit-2.ktx',
-            'security-audit-3.ktx',
+            'security-audit-1.png',
+            'security-audit-2.png',
+            'security-audit-3.png',
+            'security-audit-4.png',
+            'security-audit-5.png',
+            'security-audit-6.png',
         ]
     },
     {
@@ -27,9 +30,12 @@ export default [
         distinctions: [],
         images:
         [
-            'sotunol-1.ktx',
-            'sotunol-2.ktx',
-            'sotunol-3.ktx',
+            'sotunol-1.png',
+            'sotunol-2.png',
+            'sotunol-3.png',
+            'sotunol-4.png',
+            'sotunol-5.png',
+            'sotunol-6.png',
         ]
     },
     {
@@ -43,8 +49,8 @@ export default [
         distinctions: [],
         images:
         [
-            'ai-pipeline-1.ktx',
-            'ai-pipeline-2.ktx',
+            'ai-pipeline-1.png',
+            'ai-pipeline-2.png',
         ]
     },
     {
@@ -58,8 +64,8 @@ export default [
         distinctions: [],
         images:
         [
-            'pos-map-1.ktx',
-            'pos-map-2.ktx',
+            'pos-map-1.png',
+            'pos-map-2.png',
         ]
     },
     {
@@ -71,11 +77,7 @@ export default [
             role: [ 'Full-Stack Dev' ]
         },
         distinctions: [],
-        images:
-        [
-            'sawarni-1.ktx',
-            'sawarni-2.ktx',
-        ]
+        images: []  // Empty until images are provided
     },
     {
         title: 'Radio ISTIC',
@@ -89,8 +91,12 @@ export default [
         distinctions: [],
         images:
         [
-            'radio-istic-1.ktx',
-            'radio-istic-2.ktx',
+            'radio-istic-1.png',
+            'radio-istic-2.png',
+            'radio-istic-3.png',
+            'radio-istic-4.png',
+            'radio-istic-5.png',
+            'radio-istic-6.png',
         ]
     },
 ]

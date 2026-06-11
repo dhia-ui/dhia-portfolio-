@@ -479,19 +479,20 @@ export class ProjectsArea extends Area
                 resource = {}
                 resource.loaded = false
 
-                const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                const isPng = key.endsWith('.png')
+                const loader = this.game.resourcesLoader.getLoader(isPng ? 'texture' : 'textureKtx')
 
                 loader.load(
                     path,
                     (loadedTexture) =>
                     {
-                        resource.texture = loadedTexture
-                        resource.colorSpace = THREE.SRGBColorSpace
-                        resource.flipY = false
-                        resource.magFilter = THREE.LinearFilter
-                        resource.minFilter = THREE.LinearFilter
-                        resource.generateMipmaps = false
+                        loadedTexture.colorSpace = THREE.SRGBColorSpace
+                        loadedTexture.flipY = false
+                        loadedTexture.magFilter = THREE.LinearFilter
+                        loadedTexture.minFilter = THREE.LinearFilter
+                        loadedTexture.generateMipmaps = false
 
+                        resource.texture = loadedTexture
                         resource.loaded = true
                         
                         this.images.loadEnded(key)
