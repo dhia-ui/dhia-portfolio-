@@ -356,8 +356,8 @@ export class ProjectsArea extends Area
             this.images.mesh.visible = true
             const resource = this.images.resources.get(key)
 
-            this.images.textureOld = resource.texture.clone()
-            this.images.textureNew = resource.texture.clone()
+            this.images.textureOldNode = texture(resource.texture)
+            this.images.textureNewNode = texture(resource.texture)
 
             // Color node
             const colorNode = Fn(() =>
@@ -370,8 +370,8 @@ export class ProjectsArea extends Area
                 uvOld.x.addAssign(this.images.animationProgress.mul(0.25).mul(this.images.animationDirection))
 
                 // Textures
-                const textureOldColor = texture(this.images.textureOld, uvOld).rgb
-                const textureNewColor = texture(this.images.textureNew, uvNew).rgb
+                const textureOldColor = this.images.textureOldNode.sample(uvOld).rgb
+                const textureNewColor = this.images.textureNewNode.sample(uvNew).rgb
 
                 // Load mix
                 textureNewColor.assign(mix(color('#333333'), textureNewColor, this.images.loadProgress))
@@ -423,8 +423,7 @@ export class ProjectsArea extends Area
             if(this.navigation.current.images[this.images.index] === key)
             {
                 const resource = this.images.getResourceAndLoad(key)
-                this.images.textureNew.copy(resource.texture)
-                this.images.textureNew.needsUpdate = true
+                this.images.textureNewNode.value = resource.texture
                 gsap.to(this.images.loadProgress, { value: 1, duration: 1, overwrite: true })
 
                 this.images.loadSibling()
@@ -535,13 +534,11 @@ export class ProjectsArea extends Area
             // Update textures
             if(this.images.initiated)
             {
-                this.images.textureOld.copy(this.images.textureNew)
-                this.images.textureOld.needsUpdate = true
+                this.images.textureOldNode.value = this.images.textureNewNode.value
 
                 if(resource.loaded)
                 {
-                    this.images.textureNew.copy(resource.texture)
-                    this.images.textureNew.needsUpdate = true
+                    this.images.textureNewNode.value = resource.texture
                 }
             }
 

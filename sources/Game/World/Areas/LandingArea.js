@@ -65,7 +65,7 @@ export class LandingArea extends Area
         {
             const group = new THREE.Group()
 
-            const words = ['DHIA', 'KTITI']
+            const words = ['DHIA', 'GUETITI']
             const letterSize = 1.4
             const letterDepth = 0.5
             const spacing = 0.6

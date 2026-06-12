@@ -356,14 +356,10 @@ export class LabArea extends Area
             this.images.mesh.visible = true
             const resource = this.images.resources.get(key)
 
-            // VideoTexture cannot be cloned, so use a placeholder for the old slot
-            const placeholder = this.images.createPlaceholderTexture()
-            this.images.textureOld = resource.isVideo ? placeholder : resource.texture.clone()
-            this.images.textureNew = resource.isVideo ? resource.texture : resource.texture.clone()
-
             // Texture uniform nodes can swap .value without shader recompile
-            this.images.textureOldNode = texture(this.images.textureOld)
-            this.images.textureNewNode = texture(this.images.textureNew)
+            const placeholder = this.images.createPlaceholderTexture()
+            this.images.textureOldNode = texture(resource.isVideo ? placeholder : resource.texture)
+            this.images.textureNewNode = texture(resource.texture)
 
             // Color node
             const colorNode = Fn(() =>
@@ -430,32 +426,13 @@ export class LabArea extends Area
             {
                 const resource = this.images.getResourceAndLoad(key)
 
+                this.images.textureNewNode.value = resource.texture
                 if(resource.isVideo)
                 {
-                    // Swap the node value to the live VideoTexture
-                    this.images.textureNew = resource.texture
-                    this.images.textureNewNode.value = resource.texture
-                    this.images.material.needsUpdate = true
                     if(this.state === LabArea.STATE_OPEN || this.state === LabArea.STATE_OPENING)
                     {
                         resource.video.currentTime = 0
                         resource.video.play().catch(() => {})
-                    }
-                }
-                else
-                {
-                    // For plain textures copy into a reusable Texture object
-                    if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
-                    {
-                        this.images.textureNew.copy(resource.texture)
-                        this.images.textureNew.needsUpdate = true
-                        this.images.textureNewNode.value = this.images.textureNew
-                    }
-                    else
-                    {
-                        this.images.textureNew = resource.texture.clone()
-                        this.images.textureNew.needsUpdate = true
-                        this.images.textureNewNode.value = this.images.textureNew
                     }
                 }
 
@@ -606,12 +583,11 @@ export class LabArea extends Area
             // Update textures
             if(this.images.initiated)
             {
-                // Snapshot old: copy current "new" into "old" node before transition
-                if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
+                // Snapshot old: copy current "new" value into "old" node before transition
+                const prevTexture = this.images.textureNewNode.value
+                if(prevTexture && !prevTexture.isVideoTexture)
                 {
-                    this.images.textureOld.copy(this.images.textureNew)
-                    this.images.textureOld.needsUpdate = true
-                    this.images.textureOldNode.value = this.images.textureOld
+                    this.images.textureOldNode.value = prevTexture
                 }
                 else
                 {
@@ -621,29 +597,12 @@ export class LabArea extends Area
 
                 if(resource.loaded)
                 {
+                    this.images.textureNewNode.value = resource.texture
                     if(resource.isVideo)
                     {
-                        // VideoTexture: swap node value so shader gets live frames
-                        this.images.textureNew = resource.texture
-                        this.images.textureNewNode.value = resource.texture
-                        if(this.images.material) this.images.material.needsUpdate = true
                         // Start playback
                         resource.video.currentTime = 0
                         resource.video.play().catch(() => {})
-                    }
-                    else
-                    {
-                        if(this.images.textureNew && !this.images.textureNew.isVideoTexture)
-                        {
-                            this.images.textureNew.copy(resource.texture)
-                            this.images.textureNew.needsUpdate = true
-                        }
-                        else
-                        {
-                            this.images.textureNew = resource.texture.clone()
-                            this.images.textureNew.needsUpdate = true
-                        }
-                        this.images.textureNewNode.value = this.images.textureNew
                     }
                 }
             }

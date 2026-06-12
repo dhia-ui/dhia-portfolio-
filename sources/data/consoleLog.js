@@ -1,15 +1,15 @@
 import * as THREE from 'three/webgpu'
 
 const text = `
-██████╗ ██╗  ██╗██╗ █████╗     ██╗  ██╗████████╗██╗████████╗██╗
-██╔══██╗██║  ██║██║██╔══██╗    ██║ ██╔╝╚══██╔══╝██║╚══██╔══╝██║
-██║  ██║███████║██║███████║    █████╔╝    ██║   ██║   ██║   ██║
-██║  ██║██╔══██║██║██╔══██║    ██╔═██╗   ██║   ██║   ██║   ██║
-██████╔╝██║  ██║██║██║  ██║    ██║  ██╗  ██║   ██║   ██║   ██║
-╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝   ╚═╝  ╚═╝  ╚═╝   ╚═╝   ╚═╝   ╚═╝
+██████╗ ██╗  ██╗██╗ █████╗     ██████╗██╗  ██╗███████╗████████╗██╗████████╗██╗
+██╔══██╗██║  ██║██║██╔══██╗    ██╔════╝██║  ██║██╔════╝╚══██╔══╝██║╚══██╔══╝██║
+██║  ██║███████║██║███████║    ██║████╗██║  ██║█████╗     ██║   ██║   ██║   ██║
+██║  ██║██╔══██║██║██╔══██║    ██║╚═██║██║  ██║██╔══╝     ██║   ██║   ██║   ██║
+██████╔╝██║  ██║██║██║  ██║    ╚██████╔╝╚██████╔╝███████╗   ██║   ██║   ██║   ██║
+╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝     ╚═════╝ ╚═════╝╚══════╝   ╚═╝   ╚═╝   ╚═╝   ╚═╝
 
 ╔═ Welcome ═════════════════╗
-║ Hey sneaky developer! This is Dhia Eddine Ktiti's portfolio.
+║ Hey sneaky developer! This is Guetiti Dhia's portfolio.
 ║ Full-Stack Developer · AI Engineer · Cybersecurity Specialist
 ║ "I build things that matter — secure, intelligent, beautiful."
 ╚═══════════════════════════╝
@@ -17,8 +17,8 @@ const text = `
 ╔═ Contact ═════════════════╗
 ║ Mail    ⇒ dhiaguetiti@gmail.com
 ║ Phone   ⇒ +216 92 454 120
-║ GitHub  ⇒ https://github.com/dhiaktiti
-║ LinkedIn ⇒ https://www.linkedin.com/in/dhia-eddine-ktiti/
+║ GitHub  ⇒ https://github.com/dhia-ui
+║ LinkedIn ⇒ https://www.linkedin.com/in/guetiti-dhia/
 ║ Location ⇒ Mourouj 6, Ben Arous, Tunisia 🇹🇳
 ╚═══════════════════════════╝
 
